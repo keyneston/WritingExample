@@ -1,0 +1,33 @@
+variables:
+  author: AuthorName
+  lang: en
+  geometry: margin=1in 
+  documentclass: book
+  classoption:
+    - openany
+  output:
+    pdf:
+      header-includes:
+      - \usepackage{fancyhdr}
+      - \pagestyle{fancy}
+    epub:
+      creator:
+        - role: Author
+          text: AuthorName
+    html: # this doesn't work, for whatever reason it doesn't detect the 'html' bit here
+      header-includes: >
+        <style>
+        body {
+          max-width: unset!important;
+        }
+        </style>
+number-sections: true
+strip-comments: true
+top-level-division: chapter
+standalone: true # Required for the HTML version to include TOC
+toc: true
+wrap: none
+toc-depth: 1
+math: true
+filters:
+  - scripts/unnumber_headings.lua

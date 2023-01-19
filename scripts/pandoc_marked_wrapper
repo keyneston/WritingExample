@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -e
+
+# MARKED_ORIGIN
+# The location (base directory) of your primary working file (the folder of the working text, Scrivener or index file).
+# PATH
+# Marked sets a path which includes default executable folders and appends the directory in the MARKED_ORIGIN above. The defaults are: /Developer/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin. You can add your own by setting the PATH variable as needed and appending or overwriting Marked’s path (e.g. PATH=/usr/local/yourfolder:$PATH).
+# HOME
+# The home directory of the logged-in user. Python and other scripts which rely on the HOME variable being set will pick this up automatically, but it’s available for other uses in your scripts.
+# MARKED_EXT
+# The extension of the primary file being processed. This variable allows you to script different processes based on the type of file being viewed. For example, if $MARKED_EXT == "md" run your preferred Markdown processor, but if $MARKED_EXT == "textile" run a Textile processor.
+# MARKED_PATH
+# This is the full UNIX path to the main file open in Marked when at the time it’s loaded.
+# MARKED_INCLUDES
+# A quoted, comma-separated list of the files Marked has included in the text being passed using the various include syntaxes.
+# MARKED_PHASE
+# This will be set to either “PROCESS” or “PREPROCESS,” allowing you to use a single script to handle both phases based on this variable.
+# MARKED_CSS_PATH
+# The full path to the current stylesheet
+
+DEBUG=true
+
+function debug() {
+  if [ "$DEBUG" == "true" ];
+  then
+    echo DEBUG: $@ 1>&2
+  fi
+}
+
+PANDOC_SETTINGS=""
+settings_file=""
+
+homebrew_path="/opt/homebrew/bin"
+test -d "${homebrew_path}" && PATH="$PATH:${homebrew_path}"
+
+if `git rev-parse --is-inside-work-tree` >/dev/null 2>&1
+then
+  ROOT=`git rev-parse --show-toplevel`
+  cd "${ROOT}"
+  settings_file="${ROOT}/pandoc_settings.yml"
+  debug "found settings_file: ${settings_file}" 1>&2
+fi
+
+if [ -f "${settings_file}" ]
+then
+  PANDOC_SETTINGS+=" -d ${settings_file}"
+fi
+
+case $MARKED_EXT in
+  "md")
+    INPUT="markdown"
+    ;;
+  "html")
+    INPUT="html"
+    ;;
+  *)
+    INPUT="markdown"
+    ;;
+esac
+
+PANDOC_SETTINGS+=" -f ${INPUT} -t html"
+
+debug "Pandoc Settings: ${PANDOC_SETTINGS}"
+
+exec pandoc $PANDOC_SETTINGS --css "${MARKED_CSS_PATH}"
